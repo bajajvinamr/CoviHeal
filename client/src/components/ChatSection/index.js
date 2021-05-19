@@ -6,7 +6,9 @@ import firebase from '../../firebase'
 import axios from 'axios';
 import './styles.css';
 import moment from 'moment'
-
+import SvgIcon from '../../common/SvgIcon';
+import notify from '../../common/notif';
+import { toast, ToastContainer } from 'react-toastify';
 const cookies = new Cookies();
 
 const ChatSection = ()=> {
@@ -18,7 +20,7 @@ const ChatSection = ()=> {
     const [favs , setFavs] = useState([]);
     
     const changeHandle = (e) => {
-    setMsg(e.target.value);
+       setMsg(e.target.value);
     }
     
     const onSubmitHandle = async (e)=>{
@@ -37,10 +39,18 @@ const ChatSection = ()=> {
         if(res.data()){
             x = res.data()["msgs"]
         }
+        
+        const temp = {
+            msg , 
+            timeStamp : Date.now(),
+            sender : cookies.get("user")
+        }
 
-        x.push(msg);
+        x.push(temp);
+        
+        console.log(x);
 
-        await ref.doc(doc_id).set({
+        ref.doc(doc_id).set({
           msgs: x
         });
 
@@ -59,13 +69,10 @@ const ChatSection = ()=> {
             doc_id =  sender_id + "_" + cookies.get("email");
         }
 
-        console.log("senid",sender_id)
 
-        console.log("doc_id",doc_id)
         ref.onSnapshot((querySnapshot)=>{
             querySnapshot.forEach((doc)=>{
                 if(doc.id == doc_id){
-                    // console.log("doc_id",doc_id)
                     setChats(doc.data().msgs);
                 }
             });
@@ -82,22 +89,37 @@ const ChatSection = ()=> {
         })
         }, [])
 
+
     const handleChats = (donor_email)=>{
-        console.log("don_id hand",donor_email);
-
+        console.log(donor_email);
         setSenderID(donor_email);
-
-        console.log("send_id",sender_id)
         getChats();
     }
 
     const chatHistory = chats.length === 0 ? null : chats.map(el => {
-        console.log(el)
         return(
-            <div key={`${el}anc`} className="chat__msg">{el}</div>
+            <div key={`${el.timeStamp}anc`} className="chat__msg">
+                        <span>{el.sender}</span>
+                        <p>{el.msg}</p>
+                        <div>{moment(el.timeStamp).format('h:mm:ss a')}</div>
+            </div>
         );
     });
-    console.log("before",sender_id)
+
+    const handleNotify = ()=>{
+         
+        axios.post("http://localhost:5000/notify",{email : sender_id}).then((res)=>{
+            notify("User has been notified" , "success");
+        })
+        .catch((e)=>{
+            notify("Something went wrong" , "error");
+        })
+    }
+
+    const handleReport = ()=>{
+        notify("User has been reported" , "error");
+    }
+  
     return(
         <div className="ChatSection">
 
@@ -105,31 +127,19 @@ const ChatSection = ()=> {
                 <h6>Contacts</h6>
                 {   
                     favs.map((x)=>{
-                        console.log("don_id",x.donor_email)
-                        // console.log(cookies.get("email"));
                         return <div className="chat__profile" onClick={()=>handleChats(x.donor_email)}> {x.donor_name} </div>
                     })
                 }
             </div>
 
             <div className="chat__textArea">
-                {/* <h6>Chat Area</h6> */}
                 <div className="chat__history">
                     {chatHistory}
-                    <div className="chat__msg">
-                        <span>Person A</span>
-                        <p>chat message</p>
-                        <div>{moment(new Date()).format('h:mm:ss a')
-}</div>
-                    </div>
-                    <div className="chat__msg">
-                        <span>Person A</span>
-                        <p>chat message</p>
-                    </div>
                 </div>
 
-
-                {sender_id==null?null:<form className="chat__form" onSubmit={onSubmitHandle}>    
+                {sender_id === "null" ? null:
+                
+                <form className="chat__form" onSubmit={onSubmitHandle}>    
                     <input className="chat__typearea"
                         name="chat"
                         type="text"
@@ -146,22 +156,28 @@ const ChatSection = ()=> {
                         
                     <input className="chat__textsubmit"
                         name="submit_chat"
-                        type="submit"
+                        type="button"
                         value="Notify"
+                        onClick = {(e)=>{
+                           handleNotify()
+                        }}
                         style={{"backgroundColor" : "lightgreen"}}
                     />
                         
                     <input className="chat__textsubmit"
                         name="submit_chat"
-                        type="submit"
+                        type="button"
                         value="Report"
+                        onClick = {(e)=>{
+                            handleReport()
+                         }}
                         style={{"backgroundColor" : "salmon"}}
-                        
                     />
                 </form>}
 
                 
             </div>
+            <ToastContainer/>
         </div>
     );
 

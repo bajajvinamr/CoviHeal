@@ -4,6 +4,7 @@ import DonarCard from './../../common/DonarCard';
 import Cookies from 'universal-cookie';
 import axios from 'axios';
 import './index.css';
+
 const cookies = new Cookies();
 
 const FindDonar = (props) => {
@@ -34,8 +35,7 @@ const FindDonar = (props) => {
     const DList = DonorsContent.map(el => {
         let rdate = el.recoveryDate;
         rdate = moment(rdate).format('MMMM Do YYYY');
-        console.log(rdate);
-
+    
         return (
             <DonarCard 
                 key={el._id}
@@ -45,6 +45,7 @@ const FindDonar = (props) => {
                 bloodGroup={el.bloodGroup}
                 location= {el.areaName + "  " + el.district + " "+ el.state + "  "+ el.pincode}
                 email={el.email}
+                isVerified = {el.isVerified}
                 onclick={()=> sendRequest(el.email)}
             />
         )

@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import React  , { lazy , useState , useEffect} from "react";
 import IntroContent from "../../content/IntroContent.json";
 import MissionContent from "../../content/MissionContent.json";
 import ProductContent from "../../content/ProductContent.json";
@@ -7,14 +7,44 @@ import ContactContent from "../../content/DonarContent.json";
 // import { Carousel } from 'react-responsive-carousel';
 
 import "./styles.css"
-
+import axios from "axios";
+import notify from "./../../common/notif";
+import { toast, ToastContainer } from 'react-toastify';
 
 const DonarList = lazy(() => import("../../components/DonarList"));
 const ContentBlock = lazy(() => import("../../components/ContentBlock"));
 const Container = lazy(() => import("../../common/Container"));
 const ScrollToTop = lazy(() => import("../../common/ScrollToTop"));
 
+
 const Home = () => {
+
+
+  const [name , setName] = useState("");
+  const [email , setEmail] = useState("");
+  const [recommendor , setRecommendor] = useState("");
+  
+
+  const handleSubmit = (e)=>{
+    e.preventDefault();
+    
+    const x = {
+      name , 
+      email ,
+      recommendor
+    }
+    
+    axios.post("http://localhost:5000/recommend", x)
+    .then((res)=>{
+       notify("Thanks for recommending " , "success");
+    }).catch((e)=>{
+       notify("Something went wrong", "error");
+    })
+    
+    setName("");
+    setEmail("");
+    setRecommendor("");
+  }
   return (
     <Container>
       <ScrollToTop />
@@ -43,17 +73,27 @@ const Home = () => {
                 </div>
             </Carousel>
           </div> */}
-          <form className="recommend__form">
+          <form className="recommend__form" onSubmit = {handleSubmit}>
             <input 
+              placeholder="Name"
+              value = {name}
               name="Name"
+              onChange ={(e)=>setName(e.target.value)}
               type="text"/>
             <input 
+              placeholder="Email"
               name="email"
+              value={email}
+              onChange ={(e)=>setEmail(e.target.value)}
               type="email"/>
             <input 
+              placeholder="Your Name"
+              value = {recommendor}
               name="RecommendName"
+              onChange ={(e)=>setRecommendor(e.target.value)}
               type="text"/>
             <input
+              className="recommend__formSubmit"
               type="submit"
               name="submit"/>
           </form>
@@ -79,6 +119,7 @@ const Home = () => {
         content={ContactContent.text}
         id="contact"
       />
+      <ToastContainer/>
     </Container>
   );
 };
